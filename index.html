@@ -1,10 +1,77 @@
 <!DOCTYPE html>
 <html>
-<body>
+<head>
+<meta charset="UTF-8">
+<title>Água</title>
+</head>
 
-<h2>Teste</h2>
+<body style="font-family: Arial; padding:20px;">
 
-<button onclick="alert('FUNCIONOU')">Clique</button>
+<h2>💧 Água</h2>
+
+<textarea id="dados" style="width:100%; height:100px;"></textarea>
+
+<br><br>
+
+<button onclick="calcular()">Calcular</button>
+
+<div id="resultado" style="margin-top:15px;"></div>
+
+<script>
+
+function calcular() {
+
+  var texto = document.getElementById("dados").value;
+  var linhas = texto.split("\n");
+
+  var total = 0;
+  var count = 0;
+
+  for (var i = 0; i < linhas.length; i++) {
+
+    var linha = linhas[i].trim();
+    if (linha === "") continue;
+
+    var partes = linha.split(":");
+    var valor = partes[partes.length - 1];
+
+    valor = valor.replace(",", ".");
+    var numero = parseFloat(valor);
+
+    if (!isNaN(numero)) {
+      total += numero;
+      count++;
+    }
+  }
+
+  if (count === 0) {
+    document.getElementById("resultado").innerHTML = "⚠️ Sem dados válidos";
+    return;
+  }
+
+  var media = total / count;
+  var proj = media * 30;
+
+  var conta;
+
+  if (proj <= 10) {
+    conta = 80.84;
+  } else if (proj <= 20) {
+    conta = 80.84 + (proj - 10) * 12.8;
+  } else if (proj <= 50) {
+    conta = 80.84 + (10 * 12.8) + (proj - 20) * 31.9;
+  } else {
+    conta = 80.84 + (10 * 12.8) + (30 * 31.9) + (proj - 50) * 35.14;
+  }
+
+  document.getElementById("resultado").innerHTML =
+    "Consumo: " + total.toFixed(1) + " m³<br>" +
+    "Média: " + media.toFixed(2) + "<br>" +
+    "Projeção: " + proj.toFixed(1) + "<br>" +
+    "<b>Conta: R$ " + conta.toFixed(2) + "</b>";
+}
+
+</script>
 
 </body>
 </html>
