@@ -3,9 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <title>Água</title>
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+
+.barra {
+  height: 12px;
+  background: #007aff;
+  margin: 3px 0;
+  border-radius: 6px;
+}
+</style>
+
 </head>
 
-<body style="font-family: Arial; padding:20px;">
+<body>
 
 <h2>💧 Água</h2>
 
@@ -17,6 +32,9 @@
 
 <div id="resultado" style="margin-top:15px;"></div>
 
+<h3>📊 Consumo diário</h3>
+<div id="grafico"></div>
+
 <script>
 
 function calcular() {
@@ -24,8 +42,8 @@ function calcular() {
   var texto = document.getElementById("dados").value;
   var linhas = texto.split("\n");
 
+  var valores = [];
   var total = 0;
-  var count = 0;
 
   for (var i = 0; i < linhas.length; i++) {
 
@@ -39,17 +57,17 @@ function calcular() {
     var numero = parseFloat(valor);
 
     if (!isNaN(numero)) {
+      valores.push(numero);
       total += numero;
-      count++;
     }
   }
 
-  if (count === 0) {
+  if (valores.length === 0) {
     document.getElementById("resultado").innerHTML = "⚠️ Sem dados válidos";
     return;
   }
 
-  var media = total / count;
+  var media = total / valores.length;
   var proj = media * 30;
 
   var conta;
@@ -69,6 +87,29 @@ function calcular() {
     "Média: " + media.toFixed(2) + "<br>" +
     "Projeção: " + proj.toFixed(1) + "<br>" +
     "<b>Conta: R$ " + conta.toFixed(2) + "</b>";
+
+  desenharGrafico(valores);
+}
+
+function desenharGrafico(valores) {
+
+  var div = document.getElementById("grafico");
+  div.innerHTML = "";
+
+  var max = 0;
+
+  for (var i = 0; i < valores.length; i++) {
+    if (valores[i] > max) max = valores[i];
+  }
+
+  for (var i = 0; i < valores.length; i++) {
+
+    var barra = document.createElement("div");
+    barra.className = "barra";
+    barra.style.width = (valores[i] / max * 100) + "%";
+
+    div.appendChild(barra);
+  }
 }
 
 </script>
