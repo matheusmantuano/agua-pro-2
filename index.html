@@ -16,6 +16,13 @@ body {
   margin: 3px 0;
   border-radius: 6px;
 }
+
+.mes {
+  background: #eee;
+  padding: 8px;
+  margin-top: 6px;
+  border-radius: 8px;
+}
 </style>
 
 </head>
@@ -29,11 +36,15 @@ body {
 <br><br>
 
 <button onclick="calcular()">Calcular</button>
+<button onclick="salvar()">Salvar mês</button>
 
 <div id="resultado" style="margin-top:15px;"></div>
 
 <h3>📊 Consumo diário</h3>
 <div id="grafico"></div>
+
+<h3>📈 Histórico</h3>
+<div id="historico"></div>
 
 <script>
 
@@ -89,6 +100,11 @@ function calcular() {
     "<b>Conta: R$ " + conta.toFixed(2) + "</b>";
 
   desenharGrafico(valores);
+
+  localStorage.setItem("ultimo", JSON.stringify({
+    total: total,
+    conta: conta
+  }));
 }
 
 function desenharGrafico(valores) {
@@ -111,6 +127,64 @@ function desenharGrafico(valores) {
     div.appendChild(barra);
   }
 }
+
+function salvar() {
+
+  var ultimo = localStorage.getItem("ultimo");
+
+  if (!ultimo) {
+    alert("Calcule primeiro");
+    return;
+  }
+
+  var dados = JSON.parse(ultimo);
+
+  var historico = localStorage.getItem("historico");
+
+  if (!historico) {
+    historico = [];
+  } else {
+    historico = JSON.parse(historico);
+  }
+
+  historico.push({
+    data: new Date().toLocaleDateString(),
+    total: dados.total,
+    conta: dados.conta
+  });
+
+  localStorage.setItem("historico", JSON.stringify(historico));
+
+  carregarHistorico();
+}
+
+function carregarHistorico() {
+
+  var historico = localStorage.getItem("historico");
+
+  if (!historico) return;
+
+  historico = JSON.parse(historico);
+
+  var div = document.getElementById("historico");
+  div.innerHTML = "";
+
+  for (var i = 0; i < historico.length; i++) {
+
+    var h = historico[i];
+
+    var el = document.createElement("div");
+    el.className = "mes";
+
+    el.innerHTML =
+      "<b>" + h.data + "</b><br>" +
+      h.total.toFixed(1) + " m³ - R$ " + h.conta.toFixed(2);
+
+    div.appendChild(el);
+  }
+}
+
+carregarHistorico();
 
 </script>
 
