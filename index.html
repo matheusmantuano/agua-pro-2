@@ -2,16 +2,21 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Água</title>
+<title>Água Pro</title>
 
 <style>
-body {
-  font-family: Arial;
+body { font-family: Arial; padding: 20px; background:#f2f2f7; }
+
+.box {
+  background: white;
   padding: 20px;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: auto;
 }
 
 .barra {
-  height: 12px;
+  height: 10px;
   background: #007aff;
   margin: 3px 0;
   border-radius: 6px;
@@ -19,9 +24,24 @@ body {
 
 .mes {
   background: #eee;
-  padding: 8px;
-  margin-top: 6px;
+  padding: 10px;
+  margin-top: 8px;
   border-radius: 8px;
+}
+
+.total {
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 8px;
+  background: #007aff;
+  color: white;
 }
 </style>
 
@@ -29,22 +49,27 @@ body {
 
 <body>
 
-<h2>💧 Água</h2>
+<div class="box">
+
+<h2>💧 Água Pro</h2>
 
 <textarea id="dados" style="width:100%; height:100px;"></textarea>
 
-<br><br>
-
 <button onclick="calcular()">Calcular</button>
 <button onclick="salvar()">Salvar mês</button>
+<button onclick="limpar()">Limpar histórico</button>
 
-<div id="resultado" style="margin-top:15px;"></div>
+<div id="resultado"></div>
 
-<h3>📊 Consumo diário</h3>
+<h3>📊 Consumo</h3>
 <div id="grafico"></div>
 
 <h3>📈 Histórico</h3>
 <div id="historico"></div>
+
+<div class="total" id="totalGeral"></div>
+
+</div>
 
 <script>
 
@@ -57,7 +82,6 @@ function calcular() {
   var total = 0;
 
   for (var i = 0; i < linhas.length; i++) {
-
     var linha = linhas[i].trim();
     if (linha === "") continue;
 
@@ -81,30 +105,26 @@ function calcular() {
   var media = total / valores.length;
   var proj = media * 30;
 
-  var conta;
-
-  if (proj <= 10) {
-    conta = 80.84;
-  } else if (proj <= 20) {
-    conta = 80.84 + (proj - 10) * 12.8;
-  } else if (proj <= 50) {
-    conta = 80.84 + (10 * 12.8) + (proj - 20) * 31.9;
-  } else {
-    conta = 80.84 + (10 * 12.8) + (30 * 31.9) + (proj - 50) * 35.14;
-  }
+  var conta = calcularConta(proj);
 
   document.getElementById("resultado").innerHTML =
-    "Consumo: " + total.toFixed(1) + " m³<br>" +
-    "Média: " + media.toFixed(2) + "<br>" +
-    "Projeção: " + proj.toFixed(1) + "<br>" +
-    "<b>Conta: R$ " + conta.toFixed(2) + "</b>";
+    "Consumo: " + total.toFixed(1) +
+    " | Conta: R$ " + conta.toFixed(2);
 
   desenharGrafico(valores);
 
   localStorage.setItem("ultimo", JSON.stringify({
     total: total,
-    conta: conta
+    conta: conta,
+    mes: new Date().toLocaleString('pt-BR', { month: 'short', year: 'numeric' })
   }));
+}
+
+function calcularConta(t) {
+  if (t <= 10) return 80.84;
+  if (t <= 20) return 80.84 + (t - 10) * 12.8;
+  if (t <= 50) return 80.84 + (10 * 12.8) + (t - 20) * 31.9;
+  return 80.84 + (10 * 12.8) + (30 * 31.9) + (t - 50) * 35.14;
 }
 
 function desenharGrafico(valores) {
@@ -112,18 +132,12 @@ function desenharGrafico(valores) {
   var div = document.getElementById("grafico");
   div.innerHTML = "";
 
-  var max = 0;
+  var max = Math.max.apply(null, valores);
 
   for (var i = 0; i < valores.length; i++) {
-    if (valores[i] > max) max = valores[i];
-  }
-
-  for (var i = 0; i < valores.length; i++) {
-
     var barra = document.createElement("div");
     barra.className = "barra";
     barra.style.width = (valores[i] / max * 100) + "%";
-
     div.appendChild(barra);
   }
 }
@@ -131,27 +145,15 @@ function desenharGrafico(valores) {
 function salvar() {
 
   var ultimo = localStorage.getItem("ultimo");
-
   if (!ultimo) {
     alert("Calcule primeiro");
     return;
   }
 
   var dados = JSON.parse(ultimo);
+  var historico = JSON.parse(localStorage.getItem("historico") || "[]");
 
-  var historico = localStorage.getItem("historico");
-
-  if (!historico) {
-    historico = [];
-  } else {
-    historico = JSON.parse(historico);
-  }
-
-  historico.push({
-    data: new Date().toLocaleDateString(),
-    total: dados.total,
-    conta: dados.conta
-  });
+  historico.push(dados);
 
   localStorage.setItem("historico", JSON.stringify(historico));
 
@@ -160,28 +162,35 @@ function salvar() {
 
 function carregarHistorico() {
 
-  var historico = localStorage.getItem("historico");
-
-  if (!historico) return;
-
-  historico = JSON.parse(historico);
-
+  var historico = JSON.parse(localStorage.getItem("historico") || "[]");
   var div = document.getElementById("historico");
+  var totalGeral = 0;
+
   div.innerHTML = "";
 
   for (var i = 0; i < historico.length; i++) {
 
     var h = historico[i];
+    totalGeral += h.conta;
 
     var el = document.createElement("div");
     el.className = "mes";
 
     el.innerHTML =
-      "<b>" + h.data + "</b><br>" +
-      h.total.toFixed(1) + " m³ - R$ " + h.conta.toFixed(2);
+      "<b>" + h.mes + "</b><br>" +
+      h.total.toFixed(1) + " m³<br>" +
+      "R$ " + h.conta.toFixed(2);
 
     div.appendChild(el);
   }
+
+  document.getElementById("totalGeral").innerHTML =
+    "💰 Total gasto: R$ " + totalGeral.toFixed(2);
+}
+
+function limpar() {
+  localStorage.removeItem("historico");
+  carregarHistorico();
 }
 
 carregarHistorico();
